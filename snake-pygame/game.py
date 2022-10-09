@@ -2,6 +2,7 @@ import pygame
 import random
 from enum import Enum
 from collections import namedtuple
+import numpy
 
 pygame.init()
 font = pygame.font.Font('arial.ttf', 25)
@@ -43,7 +44,7 @@ class SnakeGameAI:
         self.clock = pygame.time.Clock()
         self.reset()
         
-        def reset()
+    def reset(self):
         '''
         Initialized/reset the game
         '''
@@ -51,14 +52,14 @@ class SnakeGameAI:
         
         self.head = Point(self.w/2, self.h/2)
         self.snake = [self.head, 
-                      Point(self.head.x-BLOCK_SIZE, self.head.y),
-                      Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]
+                    Point(self.head.x-BLOCK_SIZE, self.head.y),
+                    Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]
         
         self.score = 0
         self.food = None
         self._place_food()
         self.frame_iteration = 0
-        
+            
     def _place_food(self):
         x = random.randint(0, (self.w-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE 
         y = random.randint(0, (self.h-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE
@@ -82,7 +83,7 @@ class SnakeGameAI:
         # 3. check if game over
         reaward=0
         game_over = False
-        if self.is_collision() or if self.frame_iteration > 100*len(self.snake):
+        if self.is_collision() or self.frame_iteration > 100*len(self.snake):
             game_over = True
             reaward= -10
 
@@ -104,7 +105,7 @@ class SnakeGameAI:
     
     def is_collision(self, pt=None):
         if pt is None:
-        pt= self.head
+            pt= self.head
         # hits boundary
         if pt.x > self.w - BLOCK_SIZE or pt.x < 0 or pt.y > self.h - BLOCK_SIZE or pt.y < 0:
             return True
