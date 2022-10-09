@@ -3,7 +3,8 @@ import random
 import numpy as np 
 from game import SnakeGameAI, Direction, Point
 from collections import deque
-
+from model import Linear_QNet, QTrainer
+from helper import plot
 
 
 MAX_MEMORY= 100_000
@@ -16,11 +17,11 @@ class Agent:
     def __init__(self):
         self.n_game= 0
         self.epsilon= 0
-        self.gamma= 0
+        self.gamma= 0.9
         self.memory= deque(maxlen= MAX_MEMORY) #popleft()
         #TODO: model, trainer
-        self.model =None
-        self.trainer = None
+        self.model =Linear_QNet(11, 256,3)
+        self.trainer = QTrainer(self.model, lr=LR, gamma= self.gamma)
 
         
 
@@ -75,7 +76,7 @@ class Agent:
         return np.array(state, dtype= int)
 
 
-    def remember(self, state, action, reaward, next_state, done):
+    def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
     
     def train_long_memory(self):
@@ -88,7 +89,7 @@ class Agent:
         self.trainer.train_step(states, actions, rewards, next_states, dones)
         
     
-    def train_short_memory(self, state, action, reaward, next_state, done):
+    def train_short_memory(self, state, action, reward, next_state, done):
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, state):
@@ -102,7 +103,7 @@ class Agent:
             final_move[move] =1
         else:
             state0 = torch.tensor(state, dtype=torch.float)
-            prediction = self.model.predict(state0)
+            prediction = self.model(state0)
             move= torch.argmax(prediction).item()
             final_move[move] =1
 
@@ -124,16 +125,16 @@ class Agent:
             final_move= agent.get_action(state_old)
 
             #perfoem the move
-            reaward, done, score = game.ploay_step(final_move)
+            reward, done, score = game.ploay_step(final_move)
 
             state_new = agent.get_step(game)
 
 
             #train short memory
-            agent.train_short_memory(state_old, final_move, reaward, state_new, done)
+            agent.train_short_memory(state_old, final_move, reward, state_new, done)
 
             #remember
-            agent.remember(state_old, final_move, reaward, state_new, done)
+            agent.remember(state_old, final_move, reward, state_new, done)
 
             if done:
                 #train long memory, plot result
@@ -145,13 +146,17 @@ class Agent:
 
                 if score >record:
                     record = score
-                    #agent.model.save()
+                    agent.model.save()
 
                 
 
                 print("game", agent.n_game, "score", score, "Record:", record)
 
-
+                plot_scores.append(score)
+                total_score +=score
+                mean_scores = total_score/agent.n_game
+                plot_mean_scores.append(mean_scores)
+                plot(plot_scores, plot_mean_scores)
 
 
 
